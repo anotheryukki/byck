@@ -1,0 +1,764 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+<title>PERSON IN VEST</title>
+<link rel="icon" type="image/png" href="favicon.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  :root{
+    --bg:#060604;
+    --bg-2:#0c0c08;
+    --accent:#CCFF00;
+    --accent-dim:#7a8f0d;
+    --accent-glow:rgba(204,255,0,0.55);
+    --ink:#f4f4ec;
+    --muted:#8c8c7d;
+    --line:rgba(204,255,0,0.14);
+  }
+  *{box-sizing:border-box;}
+  html,body{
+    height:100%;
+    margin:0;
+    overflow:hidden;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Space Grotesk',sans-serif;
+  }
+  .font-display{
+    font-family:'Anton',sans-serif;
+    font-weight:400;
+    letter-spacing:-0.01em;
+  }
+  .font-mono{
+    font-family:'Space Mono',monospace;
+  }
+
+  #chart-bg{
+    position:fixed;
+    inset:0;
+    z-index:0;
+    width:100%;
+    height:100%;
+    display:block;
+  }
+
+  .grain{
+    position:fixed;
+    inset:0;
+    z-index:1;
+    pointer-events:none;
+    opacity:0.05;
+    mix-blend-mode:overlay;
+  }
+
+  .vignette{
+    position:fixed;
+    inset:0;
+    z-index:1;
+    pointer-events:none;
+    background:radial-gradient(ellipse at 50% 45%, transparent 40%, rgba(0,0,0,0.55) 100%);
+  }
+
+  .app{
+    position:relative;
+    z-index:2;
+    height:100dvh;
+    height:100vh;
+    display:flex;
+    flex-direction:column;
+  }
+
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:clamp(14px,2.4vh,28px) clamp(20px,4vw,56px);
+    flex:0 0 auto;
+  }
+
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    min-width:0;
+    flex:0 1 auto;
+  }
+  .brand-mark{
+    width:26px;height:26px;
+    border:2px solid var(--accent);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--accent);
+    font-family:'Anton',sans-serif;
+    font-size:14px;
+    transform:rotate(-4deg);
+    box-shadow:0 0 14px var(--accent-glow);
+  }
+  .brand-name{
+    font-family:'Space Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.14em;
+    color:var(--ink);
+    text-transform:uppercase;
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+
+  .ticker{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-family:'Space Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    color:var(--accent);
+    border:1px solid var(--line);
+    background:rgba(204,255,0,0.05);
+    padding:7px 14px;
+    border-radius:999px;
+    flex:0 1 auto;
+    min-width:0;
+  }
+  .ticker-text{
+    white-space:nowrap;
+    overflow:hidden;
+    text-overflow:ellipsis;
+  }
+  .ticker .dot{
+    width:6px;height:6px;border-radius:50%;
+    background:var(--accent);
+    box-shadow:0 0 8px var(--accent-glow);
+    animation:pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%,100%{opacity:1; transform:scale(1);}
+    50%{opacity:0.35; transform:scale(0.7);}
+  }
+
+  .main{
+    flex:1 1 auto;
+    display:flex;
+    align-items:stretch;
+    min-height:0;
+    padding:0 clamp(20px,4vw,56px) clamp(10px,2vh,20px);
+  }
+
+  .left{
+    flex:1 1 56%;
+    display:flex;
+    flex-direction:column;
+    justify-content:center;
+    gap:clamp(14px,2vh,22px);
+    min-width:0;
+    padding-right:clamp(10px,2vw,30px);
+  }
+
+  .eyebrow{
+    font-family:'Space Mono',monospace;
+    font-size:clamp(11px,1.1vw,13px);
+    letter-spacing:0.24em;
+    text-transform:uppercase;
+    color:var(--accent);
+    display:flex;
+    align-items:center;
+    gap:10px;
+  }
+  .eyebrow::before{
+    content:'';
+    width:28px;height:1px;
+    background:var(--accent);
+  }
+
+  h1{
+    margin:0;
+    line-height:0.86;
+    font-size:clamp(48px,8.6vw,132px);
+    text-transform:uppercase;
+    color:var(--ink);
+  }
+  h1 .vest{
+    color:var(--bg);
+    -webkit-text-stroke:2px var(--accent);
+    text-shadow:0 0 26px var(--accent-glow);
+  }
+
+  .ca-box{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    background:var(--bg-2);
+    border:1px solid var(--line);
+    border-radius:14px;
+    padding:12px 16px;
+    max-width:min(480px,100%);
+    box-shadow:0 10px 34px -14px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.03);
+  }
+  .ca-info{
+    flex:1;
+    min-width:0;
+  }
+  .ca-label{
+    font-family:'Space Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.12em;
+    color:var(--muted);
+    text-transform:uppercase;
+  }
+  .ca-value{
+    font-family:'Space Mono',monospace;
+    font-size:clamp(12px,1.4vw,14px);
+    color:var(--ink);
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    flex:1;
+    min-width:0;
+  }
+  .copy-btn{
+    flex:0 0 auto;
+    font-family:'Space Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--bg);
+    background:var(--accent);
+    border:none;
+    padding:9px 14px;
+    border-radius:8px;
+    cursor:pointer;
+    transition:transform 160ms cubic-bezier(0.34,1.56,0.64,1), box-shadow 160ms ease;
+    box-shadow:0 6px 18px -6px var(--accent-glow);
+  }
+  .copy-btn:hover{
+    transform:translateY(-2px);
+    box-shadow:0 10px 22px -6px var(--accent-glow);
+  }
+  .copy-btn:active{
+    transform:translateY(0px) scale(0.97);
+  }
+  .copy-btn:focus-visible{
+    outline:2px solid var(--ink);
+    outline-offset:2px;
+  }
+
+  .cta-row{
+    display:flex;
+    align-items:center;
+    gap:14px;
+    flex-wrap:wrap;
+  }
+  .btn-primary{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:700;
+    font-size:14px;
+    letter-spacing:0.02em;
+    color:var(--bg);
+    background:var(--accent);
+    padding:14px 26px;
+    border-radius:10px;
+    border:none;
+    cursor:pointer;
+    transition:transform 160ms cubic-bezier(0.34,1.56,0.64,1), box-shadow 160ms ease, filter 160ms ease;
+    box-shadow:0 12px 30px -10px var(--accent-glow);
+  }
+  .btn-primary:hover{ transform:translateY(-2px); filter:brightness(1.08); }
+  .btn-primary:active{ transform:translateY(0) scale(0.97); }
+  .btn-primary:focus-visible{ outline:2px solid var(--ink); outline-offset:3px; }
+
+  .btn-ghost{
+    font-family:'Space Grotesk',sans-serif;
+    font-weight:600;
+    font-size:14px;
+    color:var(--ink);
+    background:transparent;
+    border:1px solid var(--line);
+    padding:13px 24px;
+    border-radius:10px;
+    cursor:pointer;
+    transition:transform 160ms cubic-bezier(0.34,1.56,0.64,1), border-color 160ms ease, background 160ms ease;
+  }
+  .btn-ghost:hover{ border-color:var(--accent); background:rgba(204,255,0,0.06); transform:translateY(-2px); }
+  .btn-ghost:active{ transform:translateY(0) scale(0.97); }
+  .btn-ghost:focus-visible{ outline:2px solid var(--accent); outline-offset:3px; }
+
+  .right{
+    flex:1 1 44%;
+    position:relative;
+    min-width:0;
+  }
+  #hero-canvas{
+    position:absolute;
+    inset:0;
+    width:100%;
+    height:100%;
+    display:block;
+  }
+  .floor-glow{
+    position:absolute;
+    left:50%;
+    bottom:6%;
+    width:min(48vw,520px);
+    height:60px;
+    transform:translateX(-50%);
+    background:radial-gradient(ellipse at center, var(--accent-glow) 0%, rgba(204,255,0,0.08) 45%, transparent 72%);
+    filter:blur(2px);
+    z-index:1;
+    animation:floorpulse 2.4s ease-in-out infinite;
+  }
+  @keyframes floorpulse{
+    0%,100%{ opacity:0.75; }
+    50%{ opacity:1; }
+  }
+
+  .loading-tag{
+    position:absolute;
+    left:50%;
+    top:50%;
+    transform:translate(-50%,-50%);
+    font-family:'Space Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.18em;
+    color:var(--accent);
+    text-transform:uppercase;
+    display:flex;
+    align-items:center;
+    gap:10px;
+    transition:opacity 300ms ease;
+  }
+  .loading-tag .spin{
+    width:12px;height:12px;
+    border-radius:50%;
+    border:2px solid var(--line);
+    border-top-color:var(--accent);
+    animation:spin 0.8s linear infinite;
+  }
+  @keyframes spin{ to{ transform:rotate(360deg); } }
+
+  .squat-tag{
+    position:absolute;
+    top:14%;
+    right:6%;
+    font-family:'Space Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.14em;
+    text-transform:uppercase;
+    color:var(--ink);
+    background:rgba(6,6,4,0.55);
+    border:1px solid var(--line);
+    padding:8px 12px;
+    border-radius:999px;
+    backdrop-filter:blur(6px);
+    z-index:2;
+    opacity:0;
+    animation:tagfade 600ms ease 900ms forwards, floaty 4s ease-in-out 1.5s infinite;
+  }
+  @keyframes tagfade{ to{ opacity:1; } }
+  @keyframes floaty{
+    0%,100%{ transform:translateY(0); }
+    50%{ transform:translateY(-8px); }
+  }
+
+  .disclaimer{
+    flex:0 0 auto;
+    padding:0 clamp(20px,4vw,56px) clamp(12px,2.2vh,22px);
+    font-family:'Space Mono',monospace;
+    font-size:10.5px;
+    line-height:1.6;
+    color:var(--muted);
+    max-width:920px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .ticker .dot, .floor-glow, .squat-tag, .loading-tag .spin{ animation:none !important; }
+  }
+
+  @media (max-width: 880px){
+    .main{ flex-direction:column; padding-bottom:0; }
+    .left{ flex:1 1 auto; padding-right:0; justify-content:flex-start; padding-top:1vh; gap:1.4vh; }
+    h1{ font-size:clamp(38px,11vw,64px); }
+    .right{ flex:1 1 auto; min-height:0; }
+    .squat-tag{ display:none; }
+    .disclaimer{ font-size:9px; }
+  }
+
+  @media (max-width: 480px){
+    .topbar{ padding-left:16px; padding-right:16px; }
+    .brand-name{ max-width:34vw; font-size:11px; }
+    .ticker{ font-size:10.5px; padding:6px 10px; max-width:56vw; }
+    .pct{ display:none; }
+  }
+</style>
+</head>
+<body>
+
+  <canvas id="chart-bg"></canvas>
+  <div class="vignette"></div>
+  <svg class="grain" width="100%" height="100%">
+    <filter id="n"><feTurbulence type="fractalNoise" baseFrequency="0.9" numOctaves="2" stitchTiles="stitch"/></filter>
+    <rect width="100%" height="100%" filter="url(#n)"/>
+  </svg>
+
+  <div class="app">
+    <header class="topbar">
+      <div class="brand">
+        <div class="brand-mark">R</div>
+        <div class="brand-name">Person In Vest</div>
+      </div>
+      <div class="ticker">
+        <span class="dot"></span>
+        <span class="ticker-text">$REINVEST · <span id="price">0.000042</span> <span id="pct" class="pct">▲ 12.4%</span></span>
+      </div>
+    </header>
+
+    <main class="main">
+      <section class="left">
+        <div class="eyebrow">Est. today · on-chain</div>
+        <h1 class="font-display">
+          PERSON<br />
+          IN <span class="vest">VEST</span>
+        </h1>
+        <div class="ca-box">
+          <div class="ca-info">
+            <div class="ca-label">Contract</div>
+            <div class="ca-value" id="ca-text">0x4a2F9e1B7c3D8f0A6b5C2e9D1a8F4b7C0e3A9D2F</div>
+          </div>
+          <button class="copy-btn" id="copy-btn" type="button">Copy</button>
+        </div>
+
+        <div class="cta-row">
+          <button class="btn-primary" type="button">Buy $REINVEST</button>
+          <button class="btn-ghost" type="button">View Chart</button>
+        </div>
+      </section>
+
+      <section class="right">
+        <div class="floor-glow"></div>
+        <span class="squat-tag">loading gains…</span>
+        <canvas id="hero-canvas"></canvas>
+        <div class="loading-tag" id="loading-tag"><span class="spin"></span>Loading model…</div>
+      </section>
+    </main>
+
+    <p class="disclaimer">
+      $REINVEST ("Person In Vest") is a meme token created purely for entertainment. It has no intrinsic value, no guarantee of future performance, and is not an investment, security, or financial product. Nothing on this page is financial advice. Crypto assets are highly volatile — only ever use funds you can afford to lose, and do your own research.
+    </p>
+  </div>
+
+<script>
+  // Copy-to-clipboard for CA
+  const copyBtn = document.getElementById('copy-btn');
+  const caText = document.getElementById('ca-text');
+  copyBtn.addEventListener('click', async () => {
+    try {
+      await navigator.clipboard.writeText(caText.textContent.trim());
+      copyBtn.textContent = 'Copied!';
+    } catch (e) {
+      copyBtn.textContent = 'Error';
+    }
+    setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1500);
+  });
+
+  // Fake ticking price
+  (function ticker(){
+    const priceEl = document.getElementById('price');
+    const pctEl = document.getElementById('pct');
+    let base = 0.000042;
+    setInterval(() => {
+      const delta = (Math.random() - 0.42) * 0.0000015;
+      base = Math.max(0.000009, base + delta);
+      priceEl.textContent = base.toFixed(6);
+      const pct = ((Math.random() * 18) + 2).toFixed(1);
+      pctEl.textContent = '▲ ' + pct + '%';
+    }, 1800);
+  })();
+
+  // ---- Animated background chart ----
+  (function chart(){
+    const canvas = document.getElementById('chart-bg');
+    const ctx = canvas.getContext('2d');
+    let w, h, dpr;
+    function resize(){
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      w = window.innerWidth; h = window.innerHeight;
+      canvas.width = w * dpr; canvas.height = h * dpr;
+      canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    const accent = '#CCFF00';
+    const points = [];
+    const N = 90;
+    let level = 0.5;
+    for (let i=0;i<N;i++){
+      level += (Math.random()-0.42) * 0.05;
+      level = Math.max(0.15, Math.min(0.85, level));
+      points.push(level);
+    }
+
+    function step(){
+      level += (Math.random()-0.42) * 0.05;
+      level = Math.max(0.15, Math.min(0.85, level));
+      points.push(level);
+      if (points.length > N) points.shift();
+    }
+
+    function drawGrid(){
+      ctx.strokeStyle = 'rgba(204,255,0,0.05)';
+      ctx.lineWidth = 1;
+      const rows = 6, cols = 10;
+      for (let i=1;i<rows;i++){
+        const y = (h/rows)*i;
+        ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke();
+      }
+      for (let i=1;i<cols;i++){
+        const x = (w/cols)*i;
+        ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke();
+      }
+    }
+
+    function drawLine(arr, alpha, widthPx, glow){
+      const baseline = h * 0.82;
+      const amp = h * 0.5;
+      ctx.beginPath();
+      arr.forEach((v,i) => {
+        const x = (w / (arr.length-1)) * i;
+        const y = baseline - v*amp;
+        if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      });
+      ctx.strokeStyle = accent;
+      ctx.globalAlpha = alpha;
+      ctx.lineWidth = widthPx;
+      if (glow){
+        ctx.shadowColor = accent;
+        ctx.shadowBlur = 18;
+      } else {
+        ctx.shadowBlur = 0;
+      }
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = 1;
+
+      // fill under curve
+      const last = arr[arr.length-1];
+      const lastX = w;
+      const lastY = baseline - last*amp;
+      ctx.lineTo(lastX, h);
+      ctx.lineTo(0, h);
+      ctx.closePath();
+      const grad = ctx.createLinearGradient(0, baseline-amp, 0, h);
+      grad.addColorStop(0, 'rgba(204,255,0,0.14)');
+      grad.addColorStop(1, 'rgba(204,255,0,0)');
+      ctx.fillStyle = grad;
+      ctx.globalAlpha = alpha;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+
+      return { x: lastX, y: lastY };
+    }
+
+    let last = performance.now();
+    let acc = 0;
+    function frame(t){
+      const dt = t - last; last = t; acc += dt;
+      ctx.clearRect(0,0,w,h);
+      drawGrid();
+
+      if (acc > 550){ step(); acc = 0; }
+
+      const tip = drawLine(points, 0.85, 2.4, true);
+
+      // pulsing marker at the tip (right edge), roughly where the character stands
+      const pulse = 3 + Math.sin(t/220)*1.6;
+      ctx.beginPath();
+      ctx.arc(tip.x-3, tip.y, 5+pulse, 0, Math.PI*2);
+      ctx.fillStyle = 'rgba(204,255,0,0.18)';
+      ctx.fill();
+      ctx.beginPath();
+      ctx.arc(tip.x-3, tip.y, 3.5, 0, Math.PI*2);
+      ctx.fillStyle = accent;
+      ctx.shadowColor = accent;
+      ctx.shadowBlur = 12;
+      ctx.fill();
+      ctx.shadowBlur = 0;
+
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  })();
+</script>
+
+<script type="importmap">
+{
+  "imports": {
+    "three": "https://cdn.jsdelivr.net/npm/three@0.160.0/build/three.module.js",
+    "three/addons/": "https://cdn.jsdelivr.net/npm/three@0.160.0/examples/jsm/"
+  }
+}
+</script>
+<script type="module">
+  import * as THREE from 'three';
+  import { GLTFLoader } from 'three/addons/loaders/GLTFLoader.js';
+
+  const canvas = document.getElementById('hero-canvas');
+  const wrap = canvas.parentElement;
+  const loadingTag = document.getElementById('loading-tag');
+
+  const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
+  renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
+  renderer.outputColorSpace = THREE.SRGBColorSpace;
+  renderer.toneMapping = THREE.ACESFilmicToneMapping;
+  renderer.toneMappingExposure = 1.0;
+
+  const scene = new THREE.Scene();
+  const camera = new THREE.PerspectiveCamera(32, 1, 0.1, 100);
+  camera.position.set(0, 1.1, 5.2);
+
+  const rim = new THREE.DirectionalLight(0xccff00, 0.9);
+  rim.position.set(-3, 3, -2);
+  scene.add(rim);
+
+  const fill = new THREE.DirectionalLight(0xfff4e0, 0.85);
+  fill.position.set(2, 2.4, 3);
+  scene.add(fill);
+
+  const ambient = new THREE.AmbientLight(0x50503f, 0.9);
+  scene.add(ambient);
+
+  let mixer;
+  const clock = new THREE.Clock();
+
+  function fitCanvas(){
+    const rect = wrap.getBoundingClientRect();
+    const width = Math.max(1, rect.width);
+    const height = Math.max(1, rect.height);
+    renderer.setSize(width, height, false);
+    camera.aspect = width / height;
+    camera.updateProjectionMatrix();
+  }
+  window.addEventListener('resize', fitCanvas);
+  fitCanvas();
+
+  let model;
+  const loader = new GLTFLoader();
+  loader.load(
+    'Meshy_AI_Animation_air_squat_withSkin.glb',
+    (gltf) => {
+      model = gltf.scene;
+      scene.add(model);
+
+      // Box3 on a SkinnedMesh always reflects the static bind-pose geometry —
+      // it never reflects GPU skinning deformation — so to find the model's
+      // true footprint across a squat/jump animation we have to sample the
+      // actual bone world positions over the clip instead.
+      let skinnedMesh = null;
+      model.traverse((o) => { if (!skinnedMesh && o.isSkinnedMesh) skinnedMesh = o; });
+
+      // Skeletons can include non-deforming helper/IK bones positioned far
+      // outside the actual mesh — only trust bones the skin weights use.
+      let bones = [];
+      if (skinnedMesh){
+        const geom = skinnedMesh.geometry;
+        const skinIndexAttr = geom.attributes.skinIndex;
+        const skinWeightAttr = geom.attributes.skinWeight;
+        const used = new Set();
+        const total = skinIndexAttr.count;
+        const stride = Math.max(1, Math.floor(total / 8000));
+        for (let i = 0; i < total; i += stride){
+          for (let k = 0; k < 4; k++){
+            if (skinWeightAttr.getComponent(i, k) > 0.01){
+              used.add(skinIndexAttr.getComponent(i, k));
+            }
+          }
+        }
+        bones = Array.from(used).map((idx) => skinnedMesh.skeleton.bones[idx]).filter(Boolean);
+      }
+      const p = new THREE.Vector3();
+
+      function boneYExtent(){
+        let min = Infinity, max = -Infinity;
+        for (const b of bones){
+          b.getWorldPosition(p);
+          if (p.y < min) min = p.y;
+          if (p.y > max) max = p.y;
+        }
+        return { min, max };
+      }
+
+      let animMinY = Infinity, animMaxY = -Infinity;
+
+      if (gltf.animations && gltf.animations.length && bones.length){
+        mixer = new THREE.AnimationMixer(model);
+        const action = mixer.clipAction(gltf.animations[0]);
+        action.play();
+
+        const duration = gltf.animations[0].duration;
+        const samples = 40;
+        for (let i = 0; i <= samples; i++){
+          mixer.setTime((duration * i) / samples);
+          model.updateMatrixWorld(true);
+          const { min, max } = boneYExtent();
+          if (min < animMinY) animMinY = min;
+          if (max > animMaxY) animMaxY = max;
+        }
+        mixer.setTime(0);
+        model.updateMatrixWorld(true);
+      } else if (gltf.animations && gltf.animations.length){
+        mixer = new THREE.AnimationMixer(model);
+        mixer.clipAction(gltf.animations[0]).play();
+      }
+
+      const bindExtent = boneYExtent();
+      const animJointHeight = (animMaxY > animMinY) ? (animMaxY - animMinY) : (bindExtent.max - bindExtent.min);
+
+      // Joints trace bone centers, not the mesh surface — the skull rises
+      // above the head joint and shoe soles sit below the foot joint — so
+      // pad the measured joint span by a fixed estimate for that surface margin.
+      const topPad = 0.16, bottomPad = 0.09;
+      const estimatedMaxHeight = animJointHeight + topPad + bottomPad;
+
+      const targetHeight = 2.6;
+      const scale = targetHeight / estimatedMaxHeight;
+      model.scale.setScalar(scale);
+
+      // Ground the feet: bottom of the character sits `bottomPad` below the
+      // lowest bone at bind pose.
+      model.position.x -= 0;
+      model.position.z -= 0;
+      model.position.y -= (bindExtent.min - bottomPad) * scale;
+
+      const fovRad = camera.fov * Math.PI / 180;
+      const padding = 1.15;
+      const dist = (targetHeight * padding) / (2 * Math.tan(fovRad / 2));
+      const centerY = targetHeight * 0.5;
+      camera.position.set(0, centerY, dist);
+      camera.lookAt(0, centerY, 0);
+
+      loadingTag.style.opacity = '0';
+      setTimeout(() => { loadingTag.style.display = 'none'; }, 320);
+    },
+    undefined,
+    (err) => {
+      loadingTag.innerHTML = 'Model failed to load';
+      console.error(err);
+    }
+  );
+
+  function animate(){
+    requestAnimationFrame(animate);
+    const dt = clock.getDelta();
+    if (mixer) mixer.update(dt);
+    if (model) model.rotation.y = Math.sin(clock.elapsedTime * 0.35) * 0.28;
+    renderer.render(scene, camera);
+  }
+  animate();
+</script>
+</body>
+</html>
