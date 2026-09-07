@@ -35,7 +35,10 @@ http
         return;
       }
       const ext = path.extname(filePath);
-      res.writeHead(200, { "Content-Type": types[ext] || "application/octet-stream" });
+      res.writeHead(200, {
+        "Content-Type": types[ext] || "application/octet-stream",
+        "Content-Length": data.length,
+      });
       res.end(data);
     });
   })

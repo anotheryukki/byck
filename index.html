@@ -64,6 +64,79 @@
     background:radial-gradient(ellipse at 50% 45%, transparent 40%, rgba(0,0,0,0.55) 100%);
   }
 
+  .preloader{
+    position:fixed;
+    inset:0;
+    z-index:50;
+    background:var(--bg);
+    display:flex;
+    flex-direction:column;
+    align-items:center;
+    justify-content:center;
+    gap:20px;
+    padding:24px;
+    text-align:center;
+    transition:opacity 500ms ease;
+  }
+  .preloader.is-hidden{
+    opacity:0;
+    pointer-events:none;
+  }
+  .preloader-mark{
+    width:52px;
+    height:52px;
+    border:2px solid var(--accent);
+    display:flex;
+    align-items:center;
+    justify-content:center;
+    color:var(--accent);
+    font-family:'Anton',sans-serif;
+    font-size:26px;
+    transform:rotate(-4deg);
+    box-shadow:0 0 22px var(--accent-glow);
+    animation:pulse 1.8s ease-in-out infinite;
+  }
+  .preloader-title{
+    font-size:clamp(22px,4vw,32px);
+    text-transform:uppercase;
+    color:var(--ink);
+    line-height:1;
+  }
+  .preloader-title .vest{
+    color:var(--bg);
+    -webkit-text-stroke:1.5px var(--accent);
+  }
+  .preloader-bar{
+    width:min(280px,70vw);
+    height:4px;
+    border-radius:999px;
+    background:var(--line);
+    overflow:hidden;
+  }
+  .preloader-fill{
+    height:100%;
+    width:0%;
+    background:var(--accent);
+    box-shadow:0 0 12px var(--accent-glow);
+    transition:width 150ms linear;
+  }
+  .preloader-caption{
+    font-family:'Space Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.08em;
+    text-transform:uppercase;
+    color:var(--muted);
+  }
+  .preloader-skip{
+    margin-top:4px;
+    padding:10px 20px;
+    font-size:12px;
+  }
+
+  @media (prefers-reduced-motion: reduce){
+    .preloader-mark{ animation:none; }
+  }
+
   .app{
     position:relative;
     z-index:2;
@@ -154,6 +227,7 @@
     display:flex;
     flex-direction:column;
     justify-content:center;
+    padding-bottom:14vh;
     gap:clamp(14px,2vh,22px);
     min-width:0;
     padding-right:clamp(10px,2vw,30px);
@@ -189,19 +263,15 @@
   }
 
   .ca-box{
-    display:flex;
+    display:inline-flex;
+    align-self:flex-start;
     align-items:center;
-    gap:14px;
+    gap:8px;
     background:var(--bg-2);
     border:1px solid var(--line);
     border-radius:14px;
-    padding:12px 16px;
-    max-width:min(480px,100%);
+    padding:10px 18px;
     box-shadow:0 10px 34px -14px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.03);
-  }
-  .ca-info{
-    flex:1;
-    min-width:0;
   }
   .ca-label{
     font-family:'Space Mono',monospace;
@@ -211,40 +281,21 @@
     text-transform:uppercase;
   }
   .ca-value{
+    display:inline-flex;
+    align-items:center;
+    gap:8px;
     font-family:'Space Mono',monospace;
-    font-size:clamp(12px,1.4vw,14px);
-    color:var(--ink);
-    overflow:hidden;
-    text-overflow:ellipsis;
-    white-space:nowrap;
-    flex:1;
-    min-width:0;
-  }
-  .copy-btn{
-    flex:0 0 auto;
-    font-family:'Space Mono',monospace;
-    font-size:11px;
-    letter-spacing:0.08em;
+    font-size:13px;
+    letter-spacing:0.16em;
+    color:var(--accent);
     text-transform:uppercase;
-    color:var(--bg);
+    font-weight:700;
+  }
+  .ca-value .dot{
+    width:6px;height:6px;border-radius:50%;
     background:var(--accent);
-    border:none;
-    padding:9px 14px;
-    border-radius:8px;
-    cursor:pointer;
-    transition:transform 160ms cubic-bezier(0.34,1.56,0.64,1), box-shadow 160ms ease;
-    box-shadow:0 6px 18px -6px var(--accent-glow);
-  }
-  .copy-btn:hover{
-    transform:translateY(-2px);
-    box-shadow:0 10px 22px -6px var(--accent-glow);
-  }
-  .copy-btn:active{
-    transform:translateY(0px) scale(0.97);
-  }
-  .copy-btn:focus-visible{
-    outline:2px solid var(--ink);
-    outline-offset:2px;
+    box-shadow:0 0 8px var(--accent-glow);
+    animation:pulse 1.6s ease-in-out infinite;
   }
 
   .cta-row{
@@ -380,7 +431,7 @@
 
   @media (max-width: 880px){
     .main{ flex-direction:column; padding-bottom:0; }
-    .left{ flex:1 1 auto; padding-right:0; justify-content:flex-start; padding-top:1vh; gap:1.4vh; }
+    .left{ flex:1 1 auto; padding-right:0; padding-bottom:0; justify-content:flex-start; padding-top:1vh; gap:1.4vh; }
     h1{ font-size:clamp(38px,11vw,64px); }
     .right{ flex:1 1 auto; min-height:0; }
     .squat-tag{ display:none; }
@@ -396,6 +447,14 @@
 </style>
 </head>
 <body>
+
+  <div class="preloader" id="preloader">
+    <div class="preloader-mark">R</div>
+    <div class="preloader-title font-display">PERSON IN <span class="vest">VEST</span></div>
+    <div class="preloader-bar"><div class="preloader-fill" id="preloader-fill"></div></div>
+    <div class="preloader-caption" id="preloader-caption">loading gains… <span id="preloader-pct">0%</span></div>
+    <button class="btn-ghost preloader-skip" id="preloader-skip" type="button" hidden>Continue anyway</button>
+  </div>
 
   <canvas id="chart-bg"></canvas>
   <div class="vignette"></div>
@@ -424,11 +483,8 @@
           IN <span class="vest">VEST</span>
         </h1>
         <div class="ca-box">
-          <div class="ca-info">
-            <div class="ca-label">Contract</div>
-            <div class="ca-value" id="ca-text">0x4a2F9e1B7c3D8f0A6b5C2e9D1a8F4b7C0e3A9D2F</div>
-          </div>
-          <button class="copy-btn" id="copy-btn" type="button">Copy</button>
+          <div class="ca-label">Contract</div>
+          <div class="ca-value"><span class="dot"></span>Soon</div>
         </div>
 
         <div class="cta-row">
@@ -451,19 +507,6 @@
   </div>
 
 <script>
-  // Copy-to-clipboard for CA
-  const copyBtn = document.getElementById('copy-btn');
-  const caText = document.getElementById('ca-text');
-  copyBtn.addEventListener('click', async () => {
-    try {
-      await navigator.clipboard.writeText(caText.textContent.trim());
-      copyBtn.textContent = 'Copied!';
-    } catch (e) {
-      copyBtn.textContent = 'Error';
-    }
-    setTimeout(() => { copyBtn.textContent = 'Copy'; }, 1500);
-  });
-
   // Fake ticking price
   (function ticker(){
     const priceEl = document.getElementById('price');
@@ -611,6 +654,23 @@
   const wrap = canvas.parentElement;
   const loadingTag = document.getElementById('loading-tag');
 
+  const preloader = document.getElementById('preloader');
+  const preloaderFill = document.getElementById('preloader-fill');
+  const preloaderPct = document.getElementById('preloader-pct');
+  const preloaderCaption = document.getElementById('preloader-caption');
+  const preloaderSkip = document.getElementById('preloader-skip');
+
+  function hidePreloader(){
+    if (!preloader) return;
+    preloader.classList.add('is-hidden');
+    setTimeout(() => { preloader.hidden = true; }, 520);
+  }
+  preloaderSkip.addEventListener('click', hidePreloader);
+
+  // If the model is slow (large file, slow connection), let people skip
+  // the wait instead of being stuck on a loading screen indefinitely.
+  const skipTimer = setTimeout(() => { preloaderSkip.hidden = false; }, 12000);
+
   const renderer = new THREE.WebGLRenderer({ canvas, antialias: true, alpha: true, preserveDrawingBuffer: true });
   renderer.setPixelRatio(Math.min(window.devicePixelRatio || 1, 2));
   renderer.outputColorSpace = THREE.SRGBColorSpace;
@@ -743,11 +803,29 @@
 
       loadingTag.style.opacity = '0';
       setTimeout(() => { loadingTag.style.display = 'none'; }, 320);
+
+      clearTimeout(skipTimer);
+      hidePreloader();
     },
-    undefined,
+    (xhr) => {
+      if (xhr.lengthComputable && xhr.total){
+        const pct = Math.min(100, Math.round((xhr.loaded / xhr.total) * 100));
+        preloaderFill.style.width = pct + '%';
+        preloaderPct.textContent = pct + '%';
+      } else {
+        const mb = (xhr.loaded / (1024 * 1024)).toFixed(1);
+        preloaderPct.textContent = mb + ' MB';
+      }
+    },
     (err) => {
       loadingTag.innerHTML = 'Model failed to load';
       console.error(err);
+
+      clearTimeout(skipTimer);
+      preloaderCaption.textContent = "Couldn't load the character — the rest of the page still works.";
+      preloaderPct.textContent = '';
+      preloaderSkip.hidden = false;
+      preloaderSkip.textContent = 'Continue';
     }
   );
 
