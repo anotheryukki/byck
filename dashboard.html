@@ -1,0 +1,592 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Dashboard — $REINVEST</title>
+<meta name="description" content="Live buyback and holder-airdrop tracker for $REINVEST. Every trade's fee buys the chart back." />
+<link rel="icon" type="image/png" href="favicon.png" />
+<link rel="preconnect" href="https://fonts.googleapis.com" />
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin />
+<link href="https://fonts.googleapis.com/css2?family=Anton&family=Space+Grotesk:wght@400;500;600;700&family=Space+Mono:wght@400;700&display=swap" rel="stylesheet" />
+<style>
+  :root{
+    --bg:#060604;
+    --bg-2:#0c0c08;
+    --accent:#CCFF00;
+    --accent-dim:#7a8f0d;
+    --accent-glow:rgba(204,255,0,0.55);
+    --ink:#f4f4ec;
+    --muted:#8c8c7d;
+    --line:rgba(204,255,0,0.14);
+  }
+  *{box-sizing:border-box;}
+  html{ background:var(--bg); }
+  body{
+    margin:0;
+    background:var(--bg);
+    color:var(--ink);
+    font-family:'Space Grotesk',sans-serif;
+    -webkit-font-smoothing:antialiased;
+  }
+  .font-display{
+    font-family:'Anton',sans-serif;
+    font-weight:400;
+    letter-spacing:-0.01em;
+  }
+  .mono{ font-family:'Space Mono',monospace; }
+  a{ color:inherit; }
+
+  #chart-bg{
+    position:fixed;
+    inset:0;
+    z-index:0;
+    width:100%;
+    height:100%;
+    display:block;
+  }
+  .vignette{
+    position:fixed;
+    inset:0;
+    z-index:1;
+    pointer-events:none;
+    background:radial-gradient(ellipse at 50% 0%, transparent 40%, rgba(0,0,0,0.6) 100%);
+  }
+
+  .wrap{
+    position:relative;
+    z-index:2;
+    max-width:1040px;
+    margin:0 auto;
+    padding:0 20px 40px;
+  }
+
+  .topbar{
+    display:flex;
+    align-items:center;
+    justify-content:space-between;
+    gap:12px;
+    padding:22px 0;
+  }
+  .brand{
+    display:flex;
+    align-items:center;
+    gap:10px;
+    text-decoration:none;
+  }
+  .brand-mark{
+    width:26px;height:26px;
+    border:2px solid var(--accent);
+    display:flex;align-items:center;justify-content:center;
+    color:var(--accent);
+    font-family:'Anton',sans-serif;
+    font-size:14px;
+    transform:rotate(-4deg);
+    box-shadow:0 0 14px var(--accent-glow);
+  }
+  .brand-name{
+    font-family:'Space Mono',monospace;
+    font-size:13px;
+    letter-spacing:0.14em;
+    color:var(--ink);
+    text-transform:uppercase;
+  }
+
+  .status{
+    display:flex;
+    align-items:center;
+    gap:8px;
+    font-family:'Space Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    padding:7px 14px;
+    border-radius:999px;
+  }
+  .status.is-live{
+    color:var(--accent);
+    border:1px solid var(--line);
+    background:rgba(204,255,0,0.05);
+  }
+  .status.is-notice{
+    color:var(--muted);
+    border:1px solid var(--line);
+    background:transparent;
+  }
+  .status .dot{
+    width:6px;height:6px;border-radius:50%;
+    background:currentColor;
+    box-shadow:0 0 8px currentColor;
+    animation:pulse 1.6s ease-in-out infinite;
+  }
+  @keyframes pulse{
+    0%,100%{opacity:1; transform:scale(1);}
+    50%{opacity:0.35; transform:scale(0.7);}
+  }
+
+  .hero{ padding:28px 0 8px; }
+  .eyebrow{
+    font-family:'Space Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.24em;
+    text-transform:uppercase;
+    color:var(--accent);
+    display:flex;
+    align-items:center;
+    gap:10px;
+    margin-bottom:18px;
+  }
+  .eyebrow::before{
+    content:'';
+    width:28px;height:1px;
+    background:var(--accent);
+  }
+  .hero h1{
+    margin:0 0 18px;
+    line-height:0.92;
+    font-size:clamp(34px,6.4vw,68px);
+    text-transform:uppercase;
+    color:var(--ink);
+    max-width:14ch;
+  }
+  .hero h1 .accent{
+    color:var(--bg);
+    -webkit-text-stroke:1.5px var(--accent);
+    text-shadow:0 0 20px var(--accent-glow);
+  }
+  .hero p{
+    color:#c9c9bc;
+    max-width:60ch;
+    font-size:16px;
+    line-height:1.6;
+    margin:0;
+  }
+  .hero p b{ color:var(--accent); font-weight:600; }
+
+  .card{
+    background:var(--bg-2);
+    border:1px solid var(--line);
+    border-radius:16px;
+    box-shadow:0 10px 34px -14px rgba(0,0,0,0.7), inset 0 1px 0 rgba(255,255,255,0.03);
+  }
+
+  .stat-hero{
+    margin:32px 0 12px;
+    padding:26px 28px;
+  }
+  .stat-hero .label{
+    font-family:'Space Mono',monospace;
+    font-size:12px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--muted);
+  }
+  .stat-hero .value{
+    font-family:'Space Mono',monospace;
+    font-weight:700;
+    font-size:clamp(38px,8vw,72px);
+    letter-spacing:-0.02em;
+    line-height:1.05;
+    color:var(--accent);
+    text-shadow:0 0 26px var(--accent-glow);
+  }
+  .stat-hero .value small{
+    font-size:0.38em;
+    color:var(--muted);
+    font-weight:500;
+    margin-left:6px;
+    text-shadow:none;
+  }
+
+  .grid{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:12px;
+    margin:12px 0 44px;
+  }
+  .tile{ padding:18px; }
+  .tile .label{
+    font-family:'Space Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.1em;
+    text-transform:uppercase;
+    color:var(--muted);
+  }
+  .tile .value{
+    font-family:'Space Mono',monospace;
+    font-size:24px;
+    font-weight:700;
+    letter-spacing:-0.01em;
+    margin-top:6px;
+    color:var(--ink);
+    font-variant-numeric:tabular-nums;
+  }
+  @media (max-width:720px){ .grid{ grid-template-columns:repeat(2,1fr); } }
+
+  h2{
+    font-family:'Anton',sans-serif;
+    font-weight:400;
+    letter-spacing:-0.005em;
+    text-transform:uppercase;
+    font-size:clamp(22px,3.4vw,30px);
+    margin:0 0 18px;
+    color:var(--ink);
+  }
+
+  .steps{
+    display:grid;
+    grid-template-columns:repeat(4,1fr);
+    gap:12px;
+    margin-bottom:48px;
+  }
+  .step{
+    padding:18px;
+    border-radius:14px;
+    border:1px dashed var(--line);
+  }
+  .step .n{
+    font-family:'Space Mono',monospace;
+    color:var(--accent);
+    font-size:12px;
+    letter-spacing:0.08em;
+  }
+  .step b{
+    display:block;
+    margin:8px 0 4px;
+    font-size:15px;
+    color:var(--ink);
+  }
+  .step p{
+    margin:0;
+    color:var(--muted);
+    font-size:13.5px;
+    line-height:1.5;
+  }
+  @media (max-width:720px){ .steps{ grid-template-columns:1fr 1fr; } }
+
+  .tablewrap{
+    overflow-x:auto;
+    margin-bottom:48px;
+  }
+  table{
+    width:100%;
+    border-collapse:collapse;
+    font-size:13.5px;
+    min-width:560px;
+  }
+  th,td{
+    padding:12px 16px;
+    text-align:left;
+    border-bottom:1px solid var(--line);
+    white-space:nowrap;
+  }
+  th{
+    font-family:'Space Mono',monospace;
+    color:var(--muted);
+    font-weight:400;
+    font-size:11px;
+    text-transform:uppercase;
+    letter-spacing:0.08em;
+  }
+  td.num{ font-family:'Space Mono',monospace; font-variant-numeric:tabular-nums; }
+  tr:last-child td{ border-bottom:0; }
+  td a{ color:var(--accent); text-decoration:none; }
+  td a:hover{ text-decoration:underline; }
+  .empty{ padding:32px; text-align:center; color:var(--muted); font-size:13.5px; }
+
+  .addrs{
+    display:grid;
+    gap:8px;
+    margin-bottom:44px;
+  }
+  .addr{
+    display:flex;
+    align-items:center;
+    gap:12px;
+    padding:12px 16px;
+  }
+  .addr .k{
+    font-family:'Space Mono',monospace;
+    color:var(--muted);
+    font-size:12px;
+    width:150px;
+    flex:none;
+  }
+  .addr .v{
+    flex:1;
+    min-width:0;
+    font-family:'Space Mono',monospace;
+    font-size:13px;
+    overflow:hidden;
+    text-overflow:ellipsis;
+    white-space:nowrap;
+    text-decoration:none;
+  }
+  .addr .v:hover{ color:var(--accent); }
+  .addr-copy{
+    flex:none;
+    font-family:'Space Mono',monospace;
+    font-size:11px;
+    letter-spacing:0.06em;
+    text-transform:uppercase;
+    color:var(--ink);
+    background:transparent;
+    border:1px solid var(--line);
+    border-radius:8px;
+    padding:7px 12px;
+    cursor:pointer;
+    transition:border-color 160ms ease, color 160ms ease;
+  }
+  .addr-copy:hover{ border-color:var(--accent); color:var(--accent); }
+  .addr-copy:focus-visible{ outline:2px solid var(--accent); outline-offset:2px; }
+  @media (max-width:560px){
+    .addr{ flex-wrap:wrap; }
+    .addr .k{ width:100%; }
+    .addr .v{ flex:1 1 0; }
+  }
+
+  footer{
+    color:var(--muted);
+    font-family:'Space Mono',monospace;
+    font-size:10.5px;
+    line-height:1.6;
+    padding:20px 0 40px;
+    border-top:1px solid var(--line);
+  }
+  footer .updated{ margin-top:8px; color:var(--muted); }
+  footer .updated span{ color:var(--ink); }
+
+  @media (prefers-reduced-motion: reduce){
+    .status .dot{ animation:none; }
+  }
+</style>
+</head>
+<body>
+
+  <canvas id="chart-bg"></canvas>
+  <div class="vignette"></div>
+
+  <div class="wrap">
+    <header class="topbar">
+      <a class="brand" href="index.html">
+        <div class="brand-mark">$</div>
+        <div class="brand-name">$REINVEST</div>
+      </a>
+      <div class="status is-notice" id="status"><span class="dot"></span><span id="statusText">connecting…</span></div>
+    </header>
+
+    <section class="hero">
+      <div class="eyebrow">Buyback engine · dashboard</div>
+      <h1 class="font-display">Every trade <span class="accent">buys it back</span></h1>
+      <p>A <b><span id="feeTxt">2%</span> fee</b> on every $REINVEST trade is collected in <span class="quoteSym">SOL</span>. Each cycle the bot claims it, market-buys $REINVEST, and airdrops the tokens to holders — pro-rata by the <b>lowest balance</b> they held all cycle.</p>
+    </section>
+
+    <div class="card stat-hero">
+      <div class="label">Total <span class="quoteSym">SOL</span> reinvested into the chart</div>
+      <div class="value mono"><span id="solSpent">0.00</span><small class="quoteSym">SOL</small></div>
+    </div>
+
+    <div class="grid">
+      <div class="card tile"><div class="label">Tokens airdropped</div><div class="value" id="tokensDist">0</div></div>
+      <div class="card tile"><div class="label">Buyback cycles</div><div class="value" id="cycles">0</div></div>
+      <div class="card tile"><div class="label">Holders this cycle</div><div class="value" id="holders">0</div></div>
+      <div class="card tile"><div class="label">Next cycle in</div><div class="value" id="countdown">--:--</div></div>
+    </div>
+
+    <h2 class="font-display">How it works</h2>
+    <div class="steps">
+      <div class="step"><div class="n">01</div><b>Trade</b><p>Every buy and sell pays a <span class="feeTxt2">2%</span> creator fee, collected in <span class="quoteSym">SOL</span>.</p></div>
+      <div class="step"><div class="n">02</div><b>Claim</b><p>The bot claims the accrued creator fee from pump.fun.</p></div>
+      <div class="step"><div class="n">03</div><b>Buy back</b><p>It market-buys $REINVEST with every bit of it, split into chunks.</p></div>
+      <div class="step"><div class="n">04</div><b>Airdrop</b><p>Tokens go to holders pro-rata by the lowest balance held all cycle.</p></div>
+    </div>
+
+    <h2 class="font-display">Cycle history</h2>
+    <div class="card tablewrap">
+      <table>
+        <thead><tr><th>#</th><th>Time</th><th><span class="quoteSym">SOL</span> reinvested</th><th>Tokens airdropped</th><th>Holders paid</th><th>Proof</th></tr></thead>
+        <tbody id="rows"><tr><td colspan="6" class="empty">Waiting for the first cycle…</td></tr></tbody>
+      </table>
+    </div>
+
+    <h2 class="font-display">Verify everything</h2>
+    <div class="addrs" id="addrs"></div>
+
+    <footer>
+      Rewards come only from trading volume. There's no fixed yield and nothing is promised. Holders receive tokens bought back from real trading fees. Program-owned accounts (LPs, lockers) and the bot wallet are excluded.
+      <div class="updated">Last update: <span id="updated" class="mono">–</span></div>
+    </footer>
+  </div>
+
+<script>
+  // ---- Animated background chart (same as the landing page) ----
+  (function chart(){
+    const canvas = document.getElementById('chart-bg');
+    const ctx = canvas.getContext('2d');
+    let w, h, dpr;
+    function resize(){
+      dpr = Math.min(window.devicePixelRatio || 1, 2);
+      w = window.innerWidth; h = window.innerHeight;
+      canvas.width = w * dpr; canvas.height = h * dpr;
+      canvas.style.width = w + 'px'; canvas.style.height = h + 'px';
+      ctx.setTransform(dpr,0,0,dpr,0,0);
+    }
+    window.addEventListener('resize', resize);
+    resize();
+
+    const accent = '#CCFF00';
+    const points = [];
+    const N = 90;
+    let level = 0.5;
+    for (let i=0;i<N;i++){
+      level += (Math.random()-0.42) * 0.05;
+      level = Math.max(0.15, Math.min(0.85, level));
+      points.push(level);
+    }
+    function step(){
+      level += (Math.random()-0.42) * 0.05;
+      level = Math.max(0.15, Math.min(0.85, level));
+      points.push(level);
+      if (points.length > N) points.shift();
+    }
+    function drawGrid(){
+      ctx.strokeStyle = 'rgba(204,255,0,0.05)';
+      ctx.lineWidth = 1;
+      const rows = 6, cols = 10;
+      for (let i=1;i<rows;i++){
+        const y = (h/rows)*i;
+        ctx.beginPath(); ctx.moveTo(0,y); ctx.lineTo(w,y); ctx.stroke();
+      }
+      for (let i=1;i<cols;i++){
+        const x = (w/cols)*i;
+        ctx.beginPath(); ctx.moveTo(x,0); ctx.lineTo(x,h); ctx.stroke();
+      }
+    }
+    function drawLine(arr, alpha, widthPx){
+      const baseline = h * 0.86;
+      const amp = h * 0.28;
+      ctx.beginPath();
+      arr.forEach((v,i) => {
+        const x = (w / (arr.length-1)) * i;
+        const y = baseline - v*amp;
+        if (i===0) ctx.moveTo(x,y); else ctx.lineTo(x,y);
+      });
+      ctx.strokeStyle = accent;
+      ctx.globalAlpha = alpha;
+      ctx.lineWidth = widthPx;
+      ctx.shadowColor = accent;
+      ctx.shadowBlur = 14;
+      ctx.stroke();
+      ctx.shadowBlur = 0;
+      ctx.globalAlpha = 1;
+
+      const grad = ctx.createLinearGradient(0, baseline-amp, 0, h);
+      grad.addColorStop(0, 'rgba(204,255,0,0.10)');
+      grad.addColorStop(1, 'rgba(204,255,0,0)');
+      const last = arr[arr.length-1];
+      ctx.lineTo(w, baseline - last*amp);
+      ctx.lineTo(w, h);
+      ctx.lineTo(0, h);
+      ctx.closePath();
+      ctx.fillStyle = grad;
+      ctx.globalAlpha = alpha;
+      ctx.fill();
+      ctx.globalAlpha = 1;
+    }
+    let last = performance.now(), acc = 0;
+    function frame(t){
+      const dt = t - last; last = t; acc += dt;
+      ctx.clearRect(0,0,w,h);
+      drawGrid();
+      if (acc > 700){ step(); acc = 0; }
+      drawLine(points, 0.55, 2);
+      requestAnimationFrame(frame);
+    }
+    requestAnimationFrame(frame);
+  })();
+
+  // ---- Dashboard data (same contract as reinvest-bot/public/index.html) ----
+  (function dashboard(){
+    const params = new URLSearchParams(location.search);
+    const STATS_URL = params.get('stats') || '/api/stats';
+    const $ = (id) => document.getElementById(id);
+    const scan = (x, kind = 'tx') => `https://solscan.io/${kind}/${x}`;
+    let stats = null;
+
+    const DEMO = {
+      updatedAt: new Date().toISOString(), dryRun: false, feeBps: 100, cycleMinutes: 60, decimals: 6, holdersInCycle: 1284, quoteSymbol: 'QQQx',
+      token: 'DemoMint1111111111111111111111111111111111', quoteMint: 'Xs8S1uUs1zvS2p7iwtsG3b6fkhpvmwz4GYU3gWAmWHZ', botWallet: 'DemoBot11111111111111111111111111111111111',
+      nextCycleAt: new Date(Date.now() + 23 * 60000).toISOString(),
+      totals: { solSpent: 48.213, tokensDistributed: '9412330000000', cycles: 37 },
+      history: Array.from({ length: 6 }, (_, i) => ({ n: 37 - i, endedAt: new Date(Date.now() - (i + 1) * 3600e3).toISOString(), solSpent: 1.1 + i * .17, tokensDistributed: String((240000 + i * 9000) * 1e6), recipients: 1200 - i * 14, buySigs: ['demo'], airdropSigs: ['demo'] })),
+    };
+
+    function fmtTokens(raw, dec) {
+      const n = Number(BigInt(raw || '0')) / 10 ** (dec ?? 6);
+      return n >= 1e9 ? (n / 1e9).toFixed(2) + 'B' : n >= 1e6 ? (n / 1e6).toFixed(2) + 'M' : n >= 1e3 ? (n / 1e3).toFixed(1) + 'K' : n.toFixed(0);
+    }
+    const esc = (s) => String(s).replace(/[&<>"']/g, (c) => ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]));
+
+    function render(s, mode) {
+      stats = s;
+      const fee = (s.feeBps ?? 200) / 100 + '%';
+      $('feeTxt').textContent = fee;
+      document.querySelectorAll('.feeTxt2').forEach((e) => (e.textContent = fee));
+      const quoteSym = s.quoteSymbol || 'SOL';
+      document.querySelectorAll('.quoteSym').forEach((e) => (e.textContent = quoteSym));
+      $('solSpent').textContent = (s.totals?.solSpent ?? 0).toFixed(6);
+      $('tokensDist').textContent = fmtTokens(s.totals?.tokensDistributed, s.decimals);
+      $('cycles').textContent = s.totals?.cycles ?? 0;
+      $('holders').textContent = (s.holdersInCycle ?? 0).toLocaleString();
+      $('updated').textContent = new Date(s.updatedAt).toLocaleString();
+
+      const st = $('status');
+      const live = mode === 'live' && !s.dryRun;
+      st.className = 'status ' + (live ? 'is-live' : 'is-notice');
+      $('statusText').textContent = mode === 'demo' ? 'demo data' : s.dryRun ? 'dry run: not live yet' : 'bot live';
+
+      const rows = (s.history || []).map((c) => {
+        const proof = [...(c.buySigs || []).slice(0, 1).map((x) => `<a href="${scan(esc(x))}" target="_blank" rel="noopener">buy</a>`),
+                       ...(c.airdropSigs || []).slice(0, 1).map((x) => `<a href="${scan(esc(x))}" target="_blank" rel="noopener">airdrop</a>`)].join(' · ');
+        return `<tr><td class="mono">${c.n}</td><td>${new Date(c.endedAt).toLocaleString([], { month: 'short', day: 'numeric', hour: '2-digit', minute: '2-digit' })}</td>
+          <td class="num">${(c.solSpent || 0).toFixed(6)}</td><td class="num">${fmtTokens(c.tokensDistributed, s.decimals)}</td>
+          <td class="num">${(c.recipients || 0).toLocaleString()}</td><td>${proof || '–'}</td></tr>`;
+      }).join('');
+      $('rows').innerHTML = rows || `<tr><td colspan="6" class="empty">Waiting for the first cycle…</td></tr>`;
+
+      const items = [['Contract (CA)', s.token, 'token'], ['Quote asset (' + quoteSym + ')', s.quoteMint, 'token'], ['Buyback bot wallet', s.botWallet, 'account']].filter((x) => x[1]);
+      $('addrs').innerHTML = items.map(([k, v, kind]) => `<div class="card addr"><span class="k">${k}</span>
+        <a class="v mono" href="${scan(esc(v), kind)}" target="_blank" rel="noopener">${esc(v)}</a>
+        <button class="addr-copy" data-copy="${esc(v)}" type="button">Copy</button></div>`).join('');
+    }
+
+    document.addEventListener('click', (e) => {
+      const b = e.target.closest('button[data-copy]');
+      if (!b) return;
+      navigator.clipboard?.writeText(b.dataset.copy).then(() => { b.textContent = 'Copied'; setTimeout(() => (b.textContent = 'Copy'), 1200); }).catch(() => {});
+    });
+
+    function tick() {
+      if (!stats?.nextCycleAt) return;
+      const ms = new Date(stats.nextCycleAt) - Date.now();
+      if (ms <= 0) { $('countdown').textContent = 'now'; return; }
+      const m = Math.floor(ms / 60000), sec = Math.floor((ms % 60000) / 1000);
+      $('countdown').textContent = `${String(m).padStart(2, '0')}:${String(sec).padStart(2, '0')}`;
+    }
+
+    async function load() {
+      if (params.has('demo')) return render(DEMO, 'demo');
+      try {
+        const r = await fetch(STATS_URL + (STATS_URL.includes('?') ? '&' : '?') + 't=' + Date.now(), { cache: 'no-store' });
+        if (!r.ok) throw new Error(r.status);
+        render(await r.json(), 'live');
+      } catch {
+        $('statusText').textContent = 'waiting for bot…';
+        $('status').className = 'status is-notice';
+      }
+    }
+    load(); setInterval(load, 30000); setInterval(tick, 1000);
+  })();
+</script>
+</body>
+</html>
