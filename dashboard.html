@@ -554,7 +554,7 @@
       }).join('');
       $('rows').innerHTML = rows || `<tr><td colspan="6" class="empty">Waiting for the first cycle…</td></tr>`;
 
-      const items = [['Contract (CA)', s.token, 'token'], ['Quote asset (' + quoteSym + ')', s.quoteMint, 'token'], ['Buyback bot wallet', s.botWallet, 'account']].filter((x) => x[1]);
+      const items = [['Quote asset (' + quoteSym + ')', s.quoteMint, 'token']].filter((x) => x[1]);
       $('addrs').innerHTML = items.map(([k, v, kind]) => `<div class="card addr"><span class="k">${k}</span>
         <a class="v mono" href="${scan(esc(v), kind)}" target="_blank" rel="noopener">${esc(v)}</a>
         <button class="addr-copy" data-copy="${esc(v)}" type="button">Copy</button></div>`).join('');
